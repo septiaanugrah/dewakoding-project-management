@@ -30,6 +30,15 @@ class ProjectResource extends Resource
                 Forms\Components\TextInput::make('ticket_prefix')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\DatePicker::make('start_date')
+                    ->label('Start Date')
+                    ->native(false)
+                    ->displayFormat('d/m/Y'),
+                Forms\Components\DatePicker::make('end_date')
+                    ->label('End Date')
+                    ->native(false)
+                    ->displayFormat('d/m/Y')
+                    ->afterOrEqual('start_date'),
                 Forms\Components\Toggle::make('create_default_statuses')
                     ->label('Use Default Ticket Statuses')
                     ->helperText('Create standard Backlog, To Do, In Progress, Review, and Done statuses automatically')
@@ -47,6 +56,27 @@ class ProjectResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('ticket_prefix')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('start_date')
+                    ->date('d/m/Y')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('end_date')
+                    ->date('d/m/Y')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('remaining_days')
+                    ->label('Remaining Days')
+                    ->getStateUsing(function (Project $record): ?string {
+                        if (!$record->end_date) {
+                            return null;
+                        }
+                        
+                        return $record->remaining_days . ' days';
+                    })
+                    ->badge()
+                    ->color(fn (Project $record): string => 
+                        !$record->end_date ? 'gray' :
+                        ($record->remaining_days <= 0 ? 'danger' : 
+                        ($record->remaining_days <= 7 ? 'warning' : 'success'))
+                    ),
                 Tables\Columns\TextColumn::make('members_count')
                     ->counts('members')
                     ->label('Members'),

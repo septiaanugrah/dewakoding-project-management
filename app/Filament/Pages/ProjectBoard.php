@@ -51,7 +51,7 @@ class ProjectBoard extends Page
             $this->loadTicketStatuses();
         } elseif ($this->projects->isNotEmpty() && ! is_null($project_id)) {
             Notification::make()
-                ->title('Project tidak ditemukan')
+                ->title('Project Not Found')
                 ->danger()
                 ->send();
             $this->redirect(static::getUrl());
@@ -117,7 +117,7 @@ class ProjectBoard extends Page
             $this->dispatch('ticket-updated');
 
             Notification::make()
-                ->title('Ticket Berhasil Dipindahkan')
+                ->title('Ticket Updated')
                 ->success()
                 ->send();
         }
@@ -143,7 +143,9 @@ class ProjectBoard extends Page
             return;
         }
 
-        $this->redirect(TicketResource::getUrl('view', ['record' => $ticketId]));
+        
+        $url = TicketResource::getUrl('view', ['record' => $ticketId]);
+        $this->js("window.open('{$url}', '_blank')");
     }
 
     public function closeTicketDetails(): void

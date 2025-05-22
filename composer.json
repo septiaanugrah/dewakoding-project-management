@@ -10,6 +10,7 @@
         "bezhansalleh/filament-shield": "^3.3",
         "filament/filament": "^3.2",
         "laravel/framework": "^12.0",
+        "laravel/octane": "^2.9",
         "laravel/tinker": "^2.10.1"
     },
     "require-dev": {
@@ -54,6 +55,10 @@
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
+        ],
+        "octane-dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000 --watch"
         ]
     },
     "extra": {

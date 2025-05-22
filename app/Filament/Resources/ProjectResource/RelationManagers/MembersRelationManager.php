@@ -29,10 +29,7 @@ class MembersRelationManager extends RelationManager
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('tickets_count')
-                    ->counts('tickets')
-                    ->label('Assigned Tickets'),
+                    ->sortable()
             ])
             ->filters([
                 //

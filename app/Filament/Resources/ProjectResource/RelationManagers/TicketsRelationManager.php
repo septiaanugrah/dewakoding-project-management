@@ -44,7 +44,6 @@ class TicketsRelationManager extends RelationManager
                             ->pluck('name', 'id')
                             ->toArray();
                     })
-                    ->searchable()
                     ->nullable(),
                 Forms\Components\Select::make('user_id')
                     ->label('Assignee')

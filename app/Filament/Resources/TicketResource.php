@@ -13,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use App\Models\Epic;
 
 class TicketResource extends Resource
 {
@@ -64,6 +65,7 @@ class TicketResource extends Resource
                     ->afterStateUpdated(function (callable $set) {
                         $set('ticket_status_id', null);
                         $set('user_id', null);
+                        $set('epic_id', null);
                     }),
 
                 Forms\Components\Select::make('ticket_status_id')
@@ -82,6 +84,23 @@ class TicketResource extends Resource
                     ->required()
                     ->searchable()
                     ->preload(),
+                Forms\Components\Select::make('epic_id')
+                    ->label('Epic')
+                    ->options(function (callable $get) {
+                        $projectId = $get('project_id');
+                        
+                        if (!$projectId) {
+                            return [];
+                        }
+                        
+                        return Epic::where('project_id', $projectId)
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->nullable()
+                    ->hidden(fn (callable $get): bool => !$get('project_id')),
 
                 Forms\Components\TextInput::make('name')
                     ->label('Ticket Name')
@@ -137,23 +156,15 @@ class TicketResource extends Resource
                     ->sortable()
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('status.name')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn ($record) => match ($record->status?->name) {
-                        'Backlog' => 'gray',
-                        'To Do' => 'warning',
-                        'In Progress' => 'info',
-                        'Review' => 'primary',
-                        'Done' => 'success',
-                        default => 'gray',
-                    })
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->searchable()
                     ->limit(30),
+
+                Tables\Columns\TextColumn::make('status.name')
+                    ->label('Status')
+                    ->badge()
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('assignee.name')
                     ->label('Assignee')
@@ -164,6 +175,13 @@ class TicketResource extends Resource
                     ->label('Due Date')
                     ->date()
                     ->sortable(),
+                    
+                Tables\Columns\TextColumn::make('epic.name')
+                    ->label('Epic')
+                    ->sortable()
+                    ->searchable()
+                    ->default('—')
+                    ->placeholder('No Epic'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -177,24 +195,50 @@ class TicketResource extends Resource
                         if (auth()->user()->hasRole(['super_admin'])) {
                             return Project::pluck('name', 'id')->toArray();
                         }
-
+            
                         return auth()->user()->projects()->pluck('name', 'projects.id')->toArray();
                     })
                     ->searchable()
                     ->preload(),
-
-                Tables\Filters\SelectFilter::make('status')
+            
+                Tables\Filters\SelectFilter::make('ticket_status_id')
                     ->label('Status')
-                    ->relationship('status', 'name')
+                    ->options(function () {
+                        $projectId = request()->input('tableFilters.project_id');
+                        
+                        if (!$projectId) {
+                            return [];
+                        }
+                        
+                        return TicketStatus::where('project_id', $projectId)
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
                     ->searchable()
                     ->preload(),
-
+                    
+                Tables\Filters\SelectFilter::make('epic_id')
+                    ->label('Epic')
+                    ->options(function () {
+                        $projectId = request()->input('tableFilters.project_id');
+                        
+                        if (!$projectId) {
+                            return [];
+                        }
+                        
+                        return Epic::where('project_id', $projectId)
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
+                    ->searchable()
+                    ->preload(),
+            
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label('Assignee')
                     ->relationship('assignee', 'name')
                     ->searchable()
                     ->preload(),
-
+            
                 Tables\Filters\Filter::make('due_date')
                     ->form([
                         Forms\Components\DatePicker::make('due_from'),
